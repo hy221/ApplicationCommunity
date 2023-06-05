@@ -1,168 +1,193 @@
-package com.addition_game;
+
+
+
+package com.applicationcommunity;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.viewmodel.CreationExtras;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.Toast;
-
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Random;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity {
 
-    ArrayList<Integer> NumList1 = new ArrayList<Integer>();
-    private Button[] buttons = new Button[10];
-    private TextView textView_input;
-    private Button button_back;
-    private String total_num = "";
-    int count = 0;
-    int timenum = 0;
-    private CountDownTimer countDownTimer;
+    private ToDoListDB helper = null;
+    private int position = 0;
+    ArrayList<ListItem> data;
+    ListAdapter adapter;
+    private String [] title_cols = {"title","date","detail","now"};
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        TextView textView1 = findViewById(R.id.textView);
-        TextView textView2 = findViewById(R.id.textView2);
-        TextView textView_result = findViewById(R.id.button_result);
-        TextView textview_timer = findViewById(R.id.textView_timer);
-        TextView textView_score = findViewById(R.id.textView_score);
-        EditText editTextnum = findViewById(R.id.editTextNumber);
-        Button button1 = findViewById(R.id.button1);
-        Button button2 = findViewById(R.id.button2);
-        Button button_result = findViewById(R.id.button_result);
-        textView_input = findViewById(R.id.textView_input);
-        button_back = findViewById(R.id.button_back);
+        ImageButton button_new = findViewById(R.id.button_new);
+        listView = findViewById(R.id.listview);
 
-        for(int i=0; i<10;i++){
-            String buttonID = "button_" +i;
-            int resID = getResources().getIdentifier(buttonID,"id",getPackageName());
-            buttons[i] = findViewById(resID);
-            buttons[i].setOnClickListener(this);
-        }
-
-        for (int i = 1; i<100; i++){
-            NumList1.add(i);
-        }
-
-
-        /*CountDownTimer countDownTimer = new CountDownTimer(timenum*1000, 1000) {
+        //＋ボタンクリック処理
+        button_new.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onTick(long l) {
-                textview_timer.setText(""+l/1000);
-            }
-
-            @Override
-            public void onFinish() {
-
-                textView1.setText(""); textView2.setText(""); textView_input.setText("");
-                button1.setVisibility(View.VISIBLE);
-                button_result.setVisibility(View.INVISIBLE);
-                //textview_timer.setText("Finish");
-            }
-        };*/
-        //gamestart
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //カウントダウンタイム値取得
-                timenum = Integer.parseInt(editTextnum.getText().toString());
-                //初期化
-                textView_input.setText(""); textView_score.setText("0");
-                total_num = ""; count = 0;
-                button_result.setVisibility(View.VISIBLE);
-                button1.setVisibility(View.INVISIBLE);
-                //カウントダウン処理
-                countDownTimer = new CountDownTimer(timenum*1000, 1000) {
-                    @Override
-                    public void onTick(long l) {
-                        textview_timer.setText(""+l/1000);
-                    }
-
-                    @Override
-                    public void onFinish() {
-
-                        textView1.setText(""); textView2.setText(""); textView_input.setText("");
-                        button1.setVisibility(View.VISIBLE);
-                        button_result.setVisibility(View.INVISIBLE);
-                        //textview_timer.setText("Finish");
-                    }
-                }.start();//カウントダウン開始
-                //countDownTimer.start();
-                textView1.setText(ListShuffle(NumList1)+"");
-                textView2.setText(ListShuffle(NumList1)+"");
-            }
-        });
-        //キャンセルボタン押下
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //カウントダウンキャンセル
-                countDownTimer.cancel();
-                textView1.setText(""); textView2.setText("");
-                button1.setVisibility(View.VISIBLE);
-                textview_timer.setText("");
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(),com.applicationcommunity.ToDoListDetail.class);
+                startActivity(intent);
             }
         });
 
-        button_result.setOnClickListener(new View.OnClickListener() {
+
+    //}
+        helper = new ToDoListDB(this);
+
+        //data = new ArrayList<>();
+
+        //ListViewに値をセットするためのアダプター
+        //adapter = new ListAdapter(this,data,R.layout.list_items);
+
+        //DBに登録されている値(列指定)を全て取得し、ListViewに表示させる
+        /*try(SQLiteDatabase db = helper.getReadableDatabase()){
+            Cursor cs = db.query("todolist",title_cols,null,null,null,null,null,null);
+            boolean boo = cs.moveToFirst();
+            while(boo){
+                //dbから取得した値をListItemオブジェクトに詰め替え
+                ListItem item = new ListItem();
+                item.setId((new Random()).nextLong());
+                item.setTitle(cs.getString(0));
+                item.setDate(cs.getString(1));
+                item.setDetail(cs.getString(2));
+                item.setKey(cs.getString(3));
+                data.add(item);
+                boo = cs.moveToNext();
+
+            }
+        }*/
+
+        //ListViewに登録
+        //listView.setAdapter(adapter);
+
+        //リストをタップしたときの処理
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View view) {
-                //テキストボックスから値を取得
-                int num1 = Integer.parseInt(textView1.getText().toString());
-                int num2 = Integer.parseInt(textView2.getText().toString());
-                int totalnum = Integer.parseInt(textView_input.getText().toString());
-                //計算結果が正
-                if((num1+num2) == totalnum){
-                    count += 1;
-                    textView_score.setText(""+count);
-                    total_num = "";
-                    textView1.setText(ListShuffle(NumList1)+"");
-                    textView2.setText(ListShuffle(NumList1)+"");
-                //計算結果が負
-                }else{
-                    Toast toast = Toast.makeText(MainActivity.this,"×",Toast.LENGTH_SHORT);
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //タップされた値を取得し、インテントにてToDoListDBクラスに送る
+                Intent intent = new Intent(getApplicationContext(),com.applicationcommunity.ToDoListDetail.class);
+                intent.putExtra("key",adapter.getItemKey(position));
+                startActivity(intent);
+
+            }
+        });
+
+
+        //リスト長押し処理
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                //タップされたpositionをsetPosにセット
+                setPos(position);
+                alertCheck(adapter.getItemKey(position),data,adapter);
+
+               /* String [] key = {adapter.getItemKey(position)};
+                try(SQLiteDatabase db = helper.getWritableDatabase()){
+                    //dbから値を削除
+                    db.delete("todolist","now=?",key);
+                    //ArrayListからも削除する
+                    data.remove(adapter.getItem(position));
+                    //ListView更新
+                    adapter.notifyDataSetChanged();
+                    Toast toast = Toast.makeText(getApplicationContext(),"削除しました",Toast.LENGTH_SHORT);
                     toast.show();
-                }
+                }*/
+                //リストタップを検知させるにはfalseを指定。今回は長押しのみ検知させたいためtrueにしてる
+                return true;
             }
         });
-        //×ボタン押下
-        button_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //後ろ一文字を削除
-                    String get_nums = textView_input.getText().toString();
-                if (total_num.length() > 0 ){ //get_nums.length() > 0){
-                    total_num = total_num.substring(0,get_nums.length()-1);
-                    textView_input.setText(total_num);
-                }
-            }
-        });
+
     }
-    //配列の中身をシャッフルしてその値を返す
-    private int ListShuffle(ArrayList<Integer> NumList){
-        Collections.shuffle(NumList);
-        int num = NumList.get(0);
-        return num;
+
+
+    //onStart()
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        data = new ArrayList<>();
+        adapter = new ListAdapter(this,data,R.layout.list_items);
+
+        try(SQLiteDatabase db = helper.getReadableDatabase()){
+            Cursor cs = db.query("todolist",title_cols,null,null,null,null,null,null);
+            boolean boo = cs.moveToFirst();
+            while(boo){
+                //dbから取得した値をListItemオブジェクトに詰め替え
+                ListItem item = new ListItem();
+                item.setId((new Random()).nextLong());
+                item.setTitle(cs.getString(0));
+                item.setDate(cs.getString(1));
+                item.setDetail(cs.getString(2));
+                item.setKey(cs.getString(3));
+                data.add(item);
+                boo = cs.moveToNext();
+
+            }
+        }
+        adapter.notifyDataSetChanged();
+        listView.setAdapter(adapter);
     }
 
     @Override
-    public void onClick(View view){
-        //数字ボードから値を取得
-        String get_num = ((Button) view).getText().toString();
-        int buttons_num = Integer.parseInt(get_num);//数値型に変換
-        //入力された数字を文字列として連結
-        total_num += get_num;
-        textView_input.setText(total_num);
+    protected void onDestroy(){
+        helper.close();
+        super.onDestroy();
+
     }
+
+
+    //リストが長押しされると警告ダイアログが表示される
+    //引数にタップされたkeyの値やらアダプターのインスタントやらを受け取るけど、フィールドに定義してもよかったかも
+    private void alertCheck(String keyval,ArrayList<ListItem> data,ListAdapter la){
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("削除しますか？");  //タイトルをセット
+        alert.setPositiveButton("はい", new DialogInterface.OnClickListener() {  //Yesボタン周り
+            @Override
+            public void onClick(DialogInterface dialog, int which) { //「はい」を選択したときの処理
+                String [] key = {keyval};
+                try(SQLiteDatabase db = helper.getReadableDatabase()){
+                    //dbから値を削除
+                    db.delete("todolist","now=?",key);
+                }
+                //ArrayListからも削除する
+                data.remove(la.getItem(getPos()));
+                //ListView更新
+                la.notifyDataSetChanged();
+                Toast toast = Toast.makeText(getApplicationContext(),"削除しました",Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        });
+        alert.setNeutralButton("キャンセル", new DialogInterface.OnClickListener() { //キャンセルボタン周り
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //特に処理は不要なので何も記述しない
+            }
+        });
+        alert.show();
+    }
+
+    private  void setPos(int pos){
+        position = pos;
+    }
+
+    private int getPos(){
+        return position;
+    }
+
 
 }
